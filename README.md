@@ -14,9 +14,10 @@ Add fragrance to your resume with the early-UNIX energy of `roff`.
 
 - CVs are authored in **Markdown** and compiled to one-page PDFs via a
   **Pandoc** Lua filter plus a custom **Groff `ms`** template.
-- Per-job customized copies living in `applications/<job>/`.
-- `resume.md` is the canonical (English) source. Any extra language lives
-  alongside it as `resume_<language>.md` (for example `resume_spanish.md`).
+- **Per-job customized copies living in their own folders** (`applications/<job>/`)
+- Top-level `resume.md` is the canonical (English) source. Any extra language
+  lives alongside it as `resume_<language>.md` (for example
+  `resume_spanish.md`).
 
 <p align="center">
   <img src="docs/diagram.png" alt="resume.md to resume.ms to resume.pdf pipeline" width="100%">
