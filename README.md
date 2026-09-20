@@ -282,12 +282,11 @@ To me, Markdown wins on ergonomics: easier to visually scan, no escaping of
 typographical marks (the `\-` hyphen), and syntax highlighting in every editor
 for bold/italics and so on.
 
-I do concede that raw `roff` tends to produce better "one-per-line" diffing
-on what would otherwise be inlined paragraphs. But that seems somewhat minor
-to me.
+I do concede that raw `roff` produces better "one-per-line" diffing on what
+would otherwise be inlined paragraphs. But that seems somewhat minor to me.
 
-Also, I invite more advanced `roff` users to show me the error of my ways
-regarding my above reasoning.
+Also, I invite more advanced `roff` users to show me the error of my ways on
+my reasoning above.
 
 ## Is the generated PDF parseable by ATC?
 
