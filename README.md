@@ -184,7 +184,7 @@ end
 -- resume neovim add-on END
 ```
 
-### `./rename-pdfs` (project folder executable)
+### `./rename-pdfs`
 
 ```txt
 Usage: rename-pdfs [-n|--no-canonical-suffix]
