@@ -81,6 +81,16 @@ expose it as a public repo**.
 
 # Overview
 
+While the project does use `roff` (which makes it memeable), **`roff` is an
+implementation detail**. You don't actually have to touch `roff` files.
+
+You can think instead of `roffume` as taking markdown as input, and giving
+PDFs as output. 
+
+I also see the **biggest selling point** being the creation of
+**per-application, self-contained folders** containing all inputs, outputs,
+and commands.
+
 ## Commands
 
 ### `make build`
@@ -268,6 +278,11 @@ Creates a bulleted list item. Meant to be placed within an `.item`.
 No reason, I just wanted to flex. Also, I believe `roff` still in 2026
 generates PDFs faster than any other markup system by _a couple of
 milliseconds_. So one must respect the early UNIX gurus.
+
+Again, users of `roffume` can **consider `roff` an implementation detail** and
+ignore it enitrely. The main benefit of `roffume` is the creation of
+**per-application, self-contained folders** containing all inputs (markdown),
+outputs (PDFs), and commands.
 
 ## Why Markdown source instead of just `roff`?
 
