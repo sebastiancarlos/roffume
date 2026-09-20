@@ -280,7 +280,7 @@ generates PDFs faster than any other markup system by _a couple of
 milliseconds_. So one must respect the early UNIX gurus.
 
 Again, users of `roffume` can **consider `roff` an implementation detail** and
-ignore it enitrely. The main benefit of `roffume` is the creation of
+ignore it entirely. The main benefit of `roffume` is the creation of
 **per-application, self-contained folders** containing all inputs (markdown),
 outputs (PDFs), and commands.
 
