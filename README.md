@@ -87,7 +87,7 @@ implementation detail**. You don't actually have to touch `roff` files.
 You can think instead of `roffume` as taking markdown as input, and giving
 PDFs as output. 
 
-I also see the **biggest selling point** being the creation of
+I consider the **biggest selling point** to be the creation of
 **per-application, self-contained folders** containing all inputs, outputs,
 and commands.
 
