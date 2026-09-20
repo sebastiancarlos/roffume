@@ -1,0 +1,63 @@
+\# Resume macro package
+\# Adapted from: https://github.com/wlcsm/resume
+.
+\# Optional photo: set the `photo` register (default 0) so .title/.subtitle
+\# indent to make room for it on the left.
+.nr photo 0
+.
+\# Photo: place the given image top-left and pull the following header up
+\# beside it. `.photo <path>`
+\# Uses .PDFPIC (embeds on the pdf device; needs groff -U). Requires
+\# poppler-utils (pdfinfo/pdftops) at build time.
+.de photo
+.nr photo 1
+.PDFPIC -L "\\$1" 0.9i
+.sp -1.2i
+.LP
+\ 
+.sp 1.2
+..
+.
+\# Document title
+.de title
+.LP
+.if \\n[photo] .in 2.7c
+\f[B]\s[30]\\$*
+..
+.
+\# Document subtitle
+.de subtitle
+.LP
+.if \\n[photo] .in 2.7c
+\s[12]\\$*
+..
+.
+\# Section
+.de section
+.LP
+.sp 1
+\s[14]\\$*
+.LP
+.sp -1
+\l'52m'
+..
+.
+\# Item
+\# 1. Name
+\# 2. Location
+\# 3. Time
+\#
+\# Formatted as
+\# |{Company}, {Location}      {Time}|
+.de item
+.LP
+.sp 0.5
+.tl '\f[B]\s[12]\\$1\f[R] \f[I]\s[12]\\$2''\f[B]\s[11]\\$3'
+..
+.
+.de list
+.IP "  \[bu]" 3
+\s[11]\\$*
+.br
+..
+.

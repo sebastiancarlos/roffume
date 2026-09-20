@@ -1,0 +1,56 @@
+#! /usr/bin/env bash
+
+# on no command, or -h/--help, print usage
+if [[ "$#" -eq 0 || "$1" == "-h" || "$1" == "--help" ]]; then 
+  echo "Usage: new-application NAME [SOURCE]"
+  echo "  - create a ./application/NAME folder"
+  echo "  - move source files and scripts to new directory for tuning"
+  echo "  - SOURCE (optional) is the job listing URL, recorded in notes.md"
+  exit 0
+fi
+
+# create folder
+dir="./applications/$1"
+src=$2
+ 
+# if folder already exists, exit
+if [ -d "$dir" ]; then
+  echo "Folder $dir already exists"
+  exit 1
+fi
+
+mkdir -p $dir
+
+# copy source files, link library (nullglob: extra languages may not exist)
+shopt -s nullglob
+for f in resume.md resume_*.md resume.ms resume_*.ms; do
+  cp "$f" $dir
+done
+shopt -u nullglob
+ln -s ../../resume.tmac $dir
+ln -s ../../assets $dir
+
+# move scripts as symlinks
+ln -s ../../Makefile $dir
+ln -s ../../rename-pdfs $dir
+ln -s ../../verify $dir
+
+# create notes.md file
+if [ -n "$src" ]; then
+  source_line="  - <$src>"
+else
+  source_line="  - (no source URL given)"
+fi
+cat > $dir/notes.md <<EOF
+# Resources
+- Source:
+$source_line
+
+# General Notes
+
+EOF
+
+green='\033[0;32m'
+reset='\033[0m'
+
+echo -e "${green}Created new folder for application application:${reset} ${dir}"

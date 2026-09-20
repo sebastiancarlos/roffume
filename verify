@@ -1,0 +1,50 @@
+#! /usr/bin/env bash
+
+# verify - check that the resumes render to a single page.
+
+# Works like `make preview`: it compiles the Markdown sources to a temporary
+# location and renders the PDFs there, without touching the built
+# resume.pdf / resume_*.pdf (or their renamed copies) in this folder.
+
+# Prints the page count of each PDF. Exits 1 if any render to more than one
+# page.
+
+# on no command, or -h/--help, print usage
+if [[ "$#" -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) ]]; then
+  echo "usage: verify"
+  echo "  - check that resume.md and each resume_<language>.md render to at"
+  echo "    most \$MAX_PAGES pages (1)"
+  echo "  - uses a temporary build dir; the committed PDFs are left untouched"
+  echo "  - exits 1 if any PDF renders past the limit"
+  exit 0
+fi
+
+# Resolve this script's real directory (works through the per-application
+# symlink, like the Makefile's srcdir) so filters/templates are found
+# regardless of where the script is invoked from.
+srcdir="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+
+workdir="$(mktemp -d)"
+trap 'rm -rf "$workdir" >/dev/null 2>&1' EXIT
+
+# Maximum pages any resume may render to. Roffumé is a one-page-resume
+# system; raise this if yours isn't.
+MAX_PAGES=1
+
+failed=0
+shopt -s nullglob
+for md in resume.md resume_*.md; do
+  lang="${md%.md}"
+  pandoc --lua-filter="$srcdir/filters/resume.lua" \
+         --template="$srcdir/templates/resume.ms" \
+         -s "$lang.md" -o "$workdir/$lang.ms" || exit 1
+  SOURCE_DATE_EPOCH=315532800 $(grog -U -b -ww -k -Tpdf "$workdir/$lang.ms") >| "$workdir/$lang.pdf" || exit 1
+  pages="$(pdfinfo "$workdir/$lang.pdf" | awk '/^Pages:/{print $2}')"
+  echo "$lang: $pages page(s)"
+  if [[ ! "$pages" =~ ^[0-9]+$ || "$pages" -gt "$MAX_PAGES" ]]; then
+    printf '  WARNING: %s is %s pages (expected at most %s)\n' "$lang" "$pages" "$MAX_PAGES" >&2
+    failed=1
+  fi
+done
+
+exit "$failed"

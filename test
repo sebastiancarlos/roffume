@@ -1,0 +1,279 @@
+#! /usr/bin/env bash
+
+# E2E test for the resume application workflow.
+#
+# Runs the real scripts against a throwaway application folder and checks
+# the expected artifacts.
+
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+TEST_DIR="$ROOT/applications/__e2e_test__"
+FAILED=0
+
+green=$'\e[32m'
+blue=$'\e[34m'
+red=$'\e[31m'
+bold=$'\e[1m'
+reset=$'\e[0m'
+
+pass() { echo "  ${green}PASS${reset}: $1"; }
+
+fail() {
+  echo "  ${red}FAIL${reset}: $1"
+  FAILED=1
+}
+
+header() { echo "${blue}- ${bold}$1${reset}${blue}${reset}"; }
+
+cleanup() { rm -rf "$TEST_DIR" "$ROOT/resume_french.md" "$ROOT/resume_french.ms"; }
+trap cleanup EXIT
+
+check_file() {
+  if [ -e "$1" ]; then pass "$2"; else fail "$2"; fi
+}
+
+check_symlink() {
+  if [ -L "$1" ]; then pass "$2"; else fail "$2"; fi
+}
+
+pdf_ok() {
+  [ -s "$1" ] && [ "$(head -c 4 "$1" | tr -d '[:space:]')" = "%PDF" ]
+}
+
+cd "$ROOT"
+
+header "new-application"
+rm -rf "$TEST_DIR"
+if ./new-application __e2e_test__ https://example.com >/dev/null 2>&1; then
+  pass "new-application exits 0"
+else
+  fail "new-application exits 0"
+fi
+
+if [ ! -d "$TEST_DIR" ]; then
+  echo "FAIL: test folder was not created; aborting."
+  exit 1
+fi
+
+header "expected files"
+check_file "$TEST_DIR/resume.ms"            "resume.ms copied"
+check_file "$TEST_DIR/resume.md"            "resume.md copied"
+check_file "$TEST_DIR/notes.md"             "notes.md created"
+check_symlink "$TEST_DIR/resume.tmac"       "resume.tmac symlinked"
+check_symlink "$TEST_DIR/Makefile"          "Makefile symlinked"
+check_symlink "$TEST_DIR/assets"            "assets symlinked"
+check_symlink "$TEST_DIR/rename-pdfs"       "rename-pdfs symlinked"
+check_symlink "$TEST_DIR/verify"            "verify symlinked"
+
+header "skeleton fixture"
+cd "$TEST_DIR"
+# Overwrite resume.md with a fixed copy of the skeleton persona, so the suite
+# never depends on the root resume's live content (which users replace with
+# their own). Must stay one page: verify checks it below.
+cat > resume.md <<'EOF'
+---
+name: Test Candidate
+title: Senior Software Engineer
+location: Springfield
+email: test.candidate@example.com
+phone: "+15551234567"
+github: testcandidate
+linkedin: testcandidate
+show_photo: false
+photo: "assets/photo.jpg"
+margin-top: "0.6i"
+margin-left: "0.5i"
+margin-right: "0.5i"
+margin-bottom: "0.1i"
+---
+
+Software Engineer with 8 years of experience building **web, cloud, and AI**
+products. Specialized in **React and Node.js**. Led teams of up to 5
+engineers and shipped systems used by millions of users. Open-source
+contributor and author of programming tutorials.
+
+# WORK EXPERIENCE
+
+## Example Corp | Tech Lead
+    Springfield
+    2021 - Present
+
+- Lead a team of 5 engineers building a **SaaS analytics** platform.
+- Architected services handling millions of daily events.
+- Cut infrastructure costs by a third with a migration to containers.
+
+## Acme Inc | Software Engineer
+    Springfield
+    2018 - 2021
+
+- Built **React** front ends backed by Node.js APIs.
+- Shipped features to millions of users across web and mobile.
+- Wrote integration tests covering the critical user flows.
+
+## Foo Labs | Software Engineer
+    Springfield
+    2016 - 2018
+
+- Maintained internal tools and dashboards.
+- Automated releases, cutting deploy time in half.
+
+# EDUCATION
+
+## Springfield University
+    Springfield
+    2012 - 2016
+
+- B.Sc. Computer Science.
+
+# SKILLS {#skills}
+
+## Front End
+
+**TypeScript, React**, Redux, Tailwind CSS, HTML, CSS, Vite, Jest,
+Playwright, React Native.
+
+## Back End, AI, & Infrastructure
+
+**Node.js, Python**, Express.js, FastAPI, SQL, PostgreSQL, Redis, AWS,
+Docker, RESTful APIs, GraphQL.
+
+## Other Skills
+
+English (Native), Mentorship, Technical Writing.
+EOF
+
+header "make build"
+if make build >/dev/null 2>&1; then
+  pass "make build exits 0"
+else
+  fail "make build exits 0"
+fi
+check_file "$TEST_DIR/resume.pdf"           "resume.pdf produced"
+if pdf_ok "$TEST_DIR/resume.pdf"; then
+  pass "resume.pdf is a valid non-empty PDF"
+else
+  fail "resume.pdf is a valid non-empty PDF"
+fi
+
+header "verify"
+if ./verify >/dev/null 2>&1; then
+  pass "verify exits 0 on single-page PDFs"
+else
+  fail "verify exits 0 on single-page PDFs"
+fi
+if [ -z "$(./verify 2>/dev/null | grep -Ev 'page\(s\)$')" ]; then
+  pass "verify reports both page counts"
+else
+  fail "verify reports both page counts"
+fi
+
+header "rename-pdfs"
+if ./rename-pdfs >/dev/null 2>&1; then
+  pass "rename-pdfs exits 0"
+else
+  fail "rename-pdfs exits 0"
+fi
+check_file "$TEST_DIR/Test_Candidate_ENGLISH.pdf"      "Test_Candidate_ENGLISH.pdf produced"
+if [ ! -e "$TEST_DIR/resume.pdf" ]; then
+  pass "resume.pdf moved away"
+else
+  fail "resume.pdf moved away"
+fi
+
+header "rename-pdfs -n"
+if make build >/dev/null 2>&1; then
+  pass "make build regenerates PDFs after rename"
+else
+  fail "make build regenerates PDFs after rename"
+fi
+if ./rename-pdfs -n >/dev/null 2>&1; then
+  pass "rename-pdfs -n exits 0"
+else
+  fail "rename-pdfs -n exits 0"
+fi
+check_file "$TEST_DIR/Test_Candidate.pdf"      "Test_Candidate.pdf produced"
+
+header "new-application copies extra languages"
+cd "$ROOT"
+cp resume.md resume_french.md
+cp resume.ms resume_french.ms
+if ./new-application __e2e_test_lang__ >/dev/null 2>&1; then
+  pass "new-application with extra language exits 0"
+else
+  fail "new-application with extra language exits 0"
+fi
+check_file "$ROOT/applications/__e2e_test_lang__/resume_french.md" "resume_french.md copied"
+check_file "$ROOT/applications/__e2e_test_lang__/resume_french.ms" "resume_french.ms copied"
+rm -rf "$ROOT/applications/__e2e_test_lang__" resume_french.md resume_french.ms
+cd "$TEST_DIR"
+
+header "extra language end-to-end (resume_french.md + resume_chinese.md)"
+cp resume.md resume_french.md
+cp resume.md resume_chinese.md
+if make build >/dev/null 2>&1; then
+  pass "make build with extra languages exits 0"
+else
+  fail "make build with extra languages exits 0"
+fi
+check_file "$TEST_DIR/resume_french.pdf"        "resume_french.pdf produced"
+check_file "$TEST_DIR/resume_chinese.pdf"       "resume_chinese.pdf produced"
+if ./verify >/dev/null 2>&1; then
+  pass "verify exits 0 with extra languages"
+else
+  fail "verify exits 0 with extra languages"
+fi
+if ./rename-pdfs >/dev/null 2>&1; then
+  pass "rename-pdfs with extra languages exits 0"
+else
+  fail "rename-pdfs with extra languages exits 0"
+fi
+check_file "$TEST_DIR/Test_Candidate_ENGLISH.pdf"  "Test_Candidate_ENGLISH.pdf produced"
+check_file "$TEST_DIR/Test_Candidate_FRANÇAIS.pdf" "Test_Candidate_FRANÇAIS.pdf produced"
+check_file "$TEST_DIR/Test_Candidate_CHINESE.pdf"  "Test_Candidate_CHINESE.pdf produced"
+rm -f resume_french.md resume_french.ms resume_french.pdf \
+  resume_chinese.md resume_chinese.ms resume_chinese.pdf
+
+header "resume.lua: entry without a place/dates block keeps its bullets"
+# Overwrite resume.md with a minimal fixture so the check never depends on the
+# resume's real prose (which changes over time).
+cat > resume.md <<'EOF'
+# WORK EXPERIENCE
+
+## Example Corp | Role
+    Somewhere, Earth
+    2020 - 2024
+
+- dateline bullet
+
+## Headless Job | Role
+
+- headless bullet
+EOF
+if make build >/dev/null 2>&1; then
+  pass "make build with headless entry exits 0"
+else
+  fail "make build with headless entry exits 0"
+fi
+if grep -q '"Headless Job"' resume.ms; then
+  pass "headless entry rendered as .item"
+else
+  fail "headless entry rendered as .item"
+fi
+if grep -q '^\.list headless bullet' resume.ms; then
+  pass "headless entry bullets rendered"
+else
+  fail "headless entry bullets rendered"
+fi
+if grep -q '^\.list dateline bullet' resume.ms; then
+  pass "entry with dateline still renders its bullets"
+else
+  fail "entry with dateline still renders its bullets"
+fi
+
+echo
+cd "$ROOT"
+if [ "$FAILED" -eq 0 ]; then
+  echo "${green}${bold}ALL TESTS PASSED${reset}"
+else
+  echo "${red}${bold}SOME TESTS FAILED${reset}"
+  exit 1
+fi

@@ -1,0 +1,95 @@
+#! /usr/bin/env python
+
+import argparse
+import glob
+import os
+import re
+import sys
+
+# Language name (as in resume_<language>.md) to the suffix used in the
+# artifact filename: the language's own name for itself, uppercased.
+# Languages missing here fall back to LANG.upper().
+ENDONYMS = {
+    "spanish": "ESPAÑOL",
+    "french": "FRANÇAIS",
+    "portuguese": "PORTUGUÊS",
+    "german": "DEUTSCH",
+    "italian": "ITALIANO",
+}
+
+CANONICAL_SUFFIX = "ENGLISH"
+
+
+def get_yaml_field(field_name):
+    front, line = None, None
+    with open("resume.md", encoding="utf-8") as f:
+        for line in f:
+            if line.strip() == "---":
+                if front is None:
+                    front = line.strip()
+                else:
+                    break
+            elif front is not None:
+                m = re.match(
+                    r"^\s*" + re.escape(field_name) + r"\s*:\s*(.+?)\s*$", line
+                )
+                if m:
+                    return m.group(1)
+    return None
+
+
+def run():
+    parser = argparse.ArgumentParser(
+        prog="rename-pdfs",
+        description=(
+            "Rename resume.pdf and each resume_<language>.pdf to "
+            "<NAME>[_<SUFFIX>].pdf, where <NAME> is derived from the 'name:' "
+            "field in resume.md's YAML front matter (spaces replaced by "
+            "underscores). The canonical resume.md takes _ENGLISH; each extra "
+            "language takes its endonym suffix (for example _ESPAÑOL)."
+        ),
+    )
+    parser.add_argument(
+        "-n",
+        "--no-canonical-suffix",
+        action="store_true",
+        help="drop the suffix on the canonical resume (for jobs taking a single file; extra languages keep their suffix)",
+    )
+    args = parser.parse_args()
+
+    name = get_yaml_field("name")
+    if not name:
+        sys.stderr.write(
+            "rename-pdfs: could not find 'name:' in resume.md front matter\n"
+        )
+        return 1
+
+    base = re.sub(r"\s+", "_", name.strip())
+
+    # Canonical source first, then extra languages sorted for determinism.
+    stems = ["resume"] + sorted(
+        path[: -len(".md")] for path in glob.glob("resume_*.md")
+    )
+
+    renamed = []
+    for stem in stems:
+        if stem == "resume":
+            suffix = "" if args.no_canonical_suffix else "_" + CANONICAL_SUFFIX
+        else:
+            lang = stem[len("resume_") :]
+            suffix = "_" + ENDONYMS.get(lang, lang.upper())
+        target = f"{base}{suffix}.pdf"
+        os.rename(stem + ".pdf", target)
+        renamed.append(target)
+
+    green = "\033[0;32m"
+    reset = "\033[0m"
+    sys.stderr.write(green + "Renamed pdf files to:\n" + reset)
+    for target in renamed:
+        sys.stderr.write("  - %s\n" % target)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(run())
+
