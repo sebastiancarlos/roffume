@@ -314,6 +314,14 @@ the answer is **yes** (and it can be verified by `pdftotext`).
 
 I believe I am, yes.
 
+# See Also
+
+- [cv-adjuster](https://github.com/ProgramadoresSemPatria/cv-adjuster)
+  - Similar philosophy of "per-application folders."
+- [RenderCV](https://github.com/rendercv/rendercv)
+  - CV-rendering only (no per-application abstractions). Good DX, including
+    validation.
+
 # License
 
 MIT
