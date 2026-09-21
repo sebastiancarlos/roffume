@@ -11,7 +11,8 @@ applications in their own self-contained folders.
 [![Test (Linux, macOS)](https://github.com/sebastiancarlos/roffume/actions/workflows/ci.yml/badge.svg)](https://github.com/sebastiancarlos/roffume/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-`roffume` is a text-based **resume authoring system**:
+`roffume` is a text-based **resume authoring system** and **job application
+manager**:
 
 - CVs are authored in **Markdown** and compiled to one-page PDFs via a
   **Pandoc** Lua filter plus a custom **Groff `ms`** template.
