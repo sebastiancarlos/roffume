@@ -5,7 +5,8 @@
   <img src="docs/logo.png" alt="roffume" width="70%">
 </p>
 
-Add fragrance to your resume with the early-UNIX energy of `roff`.
+Add fragrance to your resume with the early-UNIX energy of `roff`. Keep job
+applications in their own self-contained folders.
 
 [![Test (Linux, macOS)](https://github.com/sebastiancarlos/roffume/actions/workflows/ci.yml/badge.svg)](https://github.com/sebastiancarlos/roffume/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
