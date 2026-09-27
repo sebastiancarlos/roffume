@@ -315,6 +315,12 @@ the answer is **yes** (and it can be verified by `pdftotext`).
 
 I believe I am, yes.
 
+## I love Groff, but this project needs _more AI_.
+
+No one has ever uttered that sentence. But in any case, check
+[SHOBR](https://github.com/sebastiancarlos/shobr), which automates `roffume`
+for job hunting.
+
 # See Also
 
 - [cv-adjuster](https://github.com/ProgramadoresSemPatria/cv-adjuster)
