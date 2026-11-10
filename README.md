@@ -315,6 +315,9 @@ for bold/italics and so on.
 
 I do concede that raw `roff` produces better "one-per-line" diffing on what
 would otherwise be inlined paragraphs. But that seems somewhat minor to me.
+Also, recall that you can _use `delta`_ instead of `diff`, which should
+produce _very readable diffs_, even if the changes are not naturally split by
+lines.
 
 Also, I invite more advanced `roff` users to show me the error of my ways on
 my reasoning above.
