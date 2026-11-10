@@ -62,7 +62,7 @@ build: check-deps
 	  base=$${src%.md}; \
 	  $(PANDOC) $$src -o $$base.ms; \
 	  echo -e '   'Building $(green)$$base.pdf$(reset) from $(green)$$base.ms$(reset); \
-	  SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) $$(grog -U -b -ww -k -Tpdf $$base.ms) >| $$base.pdf; \
+	  SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) $$(grog -U -b -ww -k -Tpdf -ms $$base.ms) >| $$base.pdf; \
 	done
 	@echo -e $(blue)Building PDF$(reset) $(green)DONE$(reset)
 
@@ -73,7 +73,7 @@ PREVIEW_PDF := /tmp/roffume-preview.pdf
 .PHONY: preview
 preview: check-deps
 	@$(PANDOC) resume.md -o resume.ms
-	@SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) $$(grog -U -b -ww -k -Tpdf resume.ms) >| $(PREVIEW_PDF)
+	@SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) $$(grog -U -b -ww -k -Tpdf -ms resume.ms) >| $(PREVIEW_PDF)
 	@if [ "$$(uname)" = "Darwin" ]; then open $(PREVIEW_PDF); else xdg-open $(PREVIEW_PDF); fi &
 	@echo -e $(blue)Previewing PDF$(reset) $(green)DONE$(reset)
 

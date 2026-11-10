@@ -38,7 +38,7 @@ for md in resume.md resume_*.md; do
   pandoc --lua-filter="$srcdir/filters/resume.lua" \
          --template="$srcdir/templates/resume.ms" \
          -s "$lang.md" -o "$workdir/$lang.ms" || exit 1
-  SOURCE_DATE_EPOCH=315532800 $(grog -U -b -ww -k -Tpdf "$workdir/$lang.ms") >| "$workdir/$lang.pdf" || exit 1
+  SOURCE_DATE_EPOCH=315532800 $(grog -U -b -ww -k -Tpdf -ms "$workdir/$lang.ms") >| "$workdir/$lang.pdf" || exit 1
   pages="$(pdfinfo "$workdir/$lang.pdf" | awk '/^Pages:/{print $2}')"
   echo "$lang: $pages page(s)"
   if [[ ! "$pages" =~ ^[0-9]+$ || "$pages" -gt "$MAX_PAGES" ]]; then

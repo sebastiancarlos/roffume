@@ -1,6 +1,6 @@
 .\" resume.ms template — document chrome for the resume pipeline.
-.\" Variables come from YAML front matter (name, title, location, email,
-.\" phone, github, linkedin, margin-top/left/right/bottom).
+.\" Variables come from YAML front matter (name, title, location, address,
+.\" neighborhood, email, phone, github, linkedin, margin-top/left/right/bottom).
 \# Import TMAC template
 .so resume.tmac
 \# Setup Helvetica font
@@ -27,6 +27,12 @@ $endif$$endif$.title $name$
 .sp -4
 .DS R
 .nf
+$if(address)$
+$address$
+$endif$
+$if(neighborhood)$
+$neighborhood$
+$endif$
 $location$
 $email$
 $phone$

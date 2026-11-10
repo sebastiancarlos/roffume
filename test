@@ -153,6 +153,11 @@ if pdf_ok "$TEST_DIR/resume.pdf"; then
 else
   fail "resume.pdf is a valid non-empty PDF"
 fi
+if grep -q '^\.TS$' resume.ms; then
+  fail "no table without .side sections"
+else
+  pass "no table without .side sections"
+fi
 
 header "verify"
 if ./verify >/dev/null 2>&1; then
@@ -267,6 +272,163 @@ if grep -q '^\.list dateline bullet' resume.ms; then
   pass "entry with dateline still renders its bullets"
 else
   fail "entry with dateline still renders its bullets"
+fi
+
+header "front matter: address and neighborhood"
+cat > resume.md <<'EOF'
+---
+name: Test Candidate
+title: Senior Software Engineer
+location: Springfield
+address: 123 Main Street
+neighborhood: Old Town
+email: test.candidate@example.com
+phone: "+15551234567"
+github: testcandidate
+linkedin: testcandidate
+show_photo: false
+---
+
+# WORK EXPERIENCE
+
+## Example Corp | Role
+    Springfield
+    2020 - 2024
+
+- Bullet.
+EOF
+if make build >/dev/null 2>&1; then
+  pass "make build with address fields exits 0"
+else
+  fail "make build with address fields exits 0"
+fi
+if grep -q '^123 Main Street$' resume.ms; then
+  pass "address rendered in contact block"
+else
+  fail "address rendered in contact block"
+fi
+if grep -q '^Old Town$' resume.ms; then
+  pass "neighborhood rendered in contact block"
+else
+  fail "neighborhood rendered in contact block"
+fi
+if ./verify >/dev/null 2>&1; then
+  pass "verify exits 0 with address fields"
+else
+  fail "verify exits 0 with address fields"
+fi
+
+header "resume.lua: two side-by-side sections"
+cat > resume.md <<'EOF'
+---
+name: Test Candidate
+title: Senior Software Engineer
+location: Springfield
+email: test.candidate@example.com
+phone: "+15551234567"
+github: testcandidate
+linkedin: testcandidate
+show_photo: false
+---
+
+# WORK EXPERIENCE
+
+## Example Corp | Role
+    Springfield
+    2020 - 2024
+
+- Bullet.
+
+# EDUCATION {.side}
+
+## Springfield University
+    Springfield
+    2012 - 2016
+
+- B.Sc. Computer Science.
+
+# REFERENCES {.side}
+
+## Jane Doe | Manager
+    Acme Inc
+    jane@example.com
+
+- Available upon request.
+EOF
+if make build >/dev/null 2>&1; then
+  pass "make build with side sections exits 0"
+else
+  fail "make build with side sections exits 0"
+fi
+for needle in '^\.TS$' '^lx lx\.$' '^\.colbegin$' '^\.colend$' \
+  '^\.section EDUCATION$' '^\.section REFERENCES$'; do
+  if grep -q "$needle" resume.ms; then
+    pass "side-by-side output contains $needle"
+  else
+    fail "side-by-side output contains $needle"
+  fi
+done
+if ./verify >/dev/null 2>&1; then
+  pass "verify exits 0 with side sections"
+else
+  fail "verify exits 0 with side sections"
+fi
+if pdftotext -raw resume.pdf - | grep -q 'EDUCATION'; then
+  pass "side-by-side PDF contains EDUCATION"
+else
+  fail "side-by-side PDF contains EDUCATION"
+fi
+if pdftotext -raw resume.pdf - | grep -q 'REFERENCES'; then
+  pass "side-by-side PDF contains REFERENCES"
+else
+  fail "side-by-side PDF contains REFERENCES"
+fi
+
+header "resume.lua: at most two columns"
+cat > resume.md <<'EOF'
+# ONE {.side}
+
+## Alpha
+    Place
+    2020
+
+- One.
+
+# TWO {.side}
+
+## Beta
+    Place
+    2021
+
+- Two.
+
+# THREE {.side}
+
+## Gamma
+    Place
+    2022
+
+- Three.
+EOF
+if make build >/dev/null 2>&1; then
+  pass "make build with three side sections exits 0"
+else
+  fail "make build with three side sections exits 0"
+fi
+if grep -q '^lx lx lx\.$' resume.ms; then
+  fail "no three-column table"
+else
+  pass "no three-column table"
+fi
+if [ "$(grep -c '^lx lx\.$' resume.ms)" -eq 1 ]; then
+  pass "three side sections use one two-column table"
+else
+  fail "three side sections use one two-column table"
+fi
+if grep -q '^\.section THREE$' resume.ms; then
+  pass "leftover side section stays full width"
+else
+  fail "leftover side section stays full width"
 fi
 
 echo

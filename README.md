@@ -208,11 +208,11 @@ for later exploration without affecting the to-be-sent files).
 
 ## Markdown source (`resume.md`)
 
-- Personal information (name, title, location, email, phone, github, linkedin,
-  plus optional page margins (`margin-top`/`margin-left`/`margin-right`/
-  `margin-bottom`) and an optional photo (`show_photo: true` + `photo: <path>`)
-  lives in the YAML front matter; the template feeds it into the contact
-  block.
+- Personal information (name, title, location, optional address and
+  neighborhood, email, phone, github, linkedin, plus optional page margins
+  (`margin-top`/`margin-left`/`margin-right`/`margin-bottom`) and an optional
+  photo (`show_photo: true` + `photo: <path>`) lives in the YAML front matter;
+  the template feeds it into the contact block.
 - Photo should be square-ish: The layout is tuned for a ~1:1 photo.
   - _Photo hack note_: In groff, a picture is glued to the text baseline and
     you can't move it up. And a picture hangs lower than text of the same
@@ -237,6 +237,19 @@ for later exploration without affecting the to-be-sent files).
 
 - Skill categories are grouped under a `# SKILLS {#skills}` section as
   `## Category` headings each followed by one comma-separated paragraph.
+- Adjacent top-level sections can be rendered side by side by adding the
+  `{.side}` class to both `#` headings:
+
+  ```markdown
+  # EDUCATION {.side}
+  ...
+  # REFERENCES {.side}
+  ...
+  ```
+
+  At most two sections are paired into one row. Consecutive `.side` sections
+  are paired in order, and an unpaired leftover section is rendered full
+  width. Keep the lines short: each column is half the page width.
 - An empty `::: {.pagebreak}` div inserts a page break (`.bp`).
 - Bold/italic inside bullets, skills and the summary are passed through to
   groff font escapes by the filters.
@@ -309,7 +322,11 @@ my reasoning above.
 ## Is the generated PDF parseable by ATC?
 
 You probably meant ATS (ATC means "Air Traffic Control"). But in both cases,
-the answer is **yes** (and it can be verified by `pdftotext`).
+the answer is **yes** (and it can be verified by `pdftotext`). 
+
+Side-by-side `.side` sections could be an exception: positional extraction can
+interleave the columns. But in our testing with `pdftotext -raw`, the
+extraction works perfectly even with side-by-side sections.
 
 ## Are you ok?
 

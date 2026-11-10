@@ -20,14 +20,23 @@
 -- Other content:
 --   * Top-level paragraphs (summary etc.) -> `.PP`.
 --   * Empty div class "pagebreak" -> `.bp`.
---   * YAML front matter (name, title, location, email, phone, github,
---     linkedin, hm, fm) feeds the custom ms template.
+--   * Adjacent sections with class "side" -> a two-column tbl.
+--   * YAML front matter (name, title, location, address, neighborhood, email,
+--     phone, github, linkedin, margins) feeds the custom ms template.
 
--- Escape literal characters groff would interpret (e.g. `@` for email).
+-- Escape literal characters groff would interpret (for example `@` for email).
 local function esctxt(s)
   s = s:gsub("\\", "\\\\")
   s = s:gsub("@", "\\(at")
   return s
+end
+
+-- True when an element carries the given class.
+local function has_class(el, name)
+  for _, c in ipairs(el.classes) do
+    if c == name then return true end
+  end
+  return false
 end
 
 local function inlines_to_ms(inls)
@@ -157,6 +166,77 @@ local function skills_to_ms(el)
   return table.concat(out, "\n")
 end
 
+-- Render one grouped section Div with the layout selected by its H1 id.
+local function section_to_ms(el)
+  if el.identifier == "skills" then
+    return skills_to_ms(el)
+  end
+  return jobs_to_ms(el)
+end
+
+-- Render exactly two grouped sections side by side with tbl. Each section is
+-- formatted inside a text block. .colbegin/.colend make the regular macros
+-- use the cell width instead of the full page line length.
+local function columns_to_ms(sections)
+  local cells = {}
+  for _, sec in ipairs(sections) do
+    if sec.t == "Div"
+      and sec.content[1]
+      and sec.content[1].t == "Header"
+      and sec.content[1].level == 1
+    then
+      cells[#cells + 1] = section_to_ms(sec)
+    end
+  end
+  if #cells ~= 2 then
+    return table.concat(cells, "\n")
+  end
+  local out = {
+    ".in 0",
+    ".TS",
+    "tab(;);",
+    "lx lx.",
+    "T{",
+    ".colbegin",
+    cells[1],
+    ".colend",
+    "T};T{",
+    ".colbegin",
+    cells[2],
+    ".colend",
+    "T}",
+    ".TE",
+  }
+  return table.concat(out, "\n")
+end
+
+-- Wrap runs of adjacent `.side` sections into `.columns` Divs, two sections
+-- per row. A leftover section stays a normal full-width section.
+local function group_columns(blocks)
+  local out, i, n = {}, 1, #blocks
+  while i <= n do
+    local b = blocks[i]
+    if b.t == "Div" and has_class(b, "side") then
+      local run = { b }
+      local j = i + 1
+      if j <= n and blocks[j].t == "Div" and has_class(blocks[j], "side") then
+        run[#run + 1] = blocks[j]
+        j = j + 1
+      end
+      if #run == 2 then
+        out[#out + 1] = pandoc.Div(run, pandoc.Attr("", { "columns" }))
+      else
+        out[#out + 1] = b
+      end
+      i = j
+    else
+      out[#out + 1] = b
+      i = i + 1
+    end
+  end
+  return out
+end
+
 local filter = {
   traverse = "topdown",
 
@@ -165,13 +245,13 @@ local filter = {
   end,
 
   Div = function(el)
-    if el.classes[1] == "pagebreak" then
+    if has_class(el, "pagebreak") then
       return pandoc.RawBlock("ms", ".bp"), false
+    elseif has_class(el, "columns") then
+      local sections = group_into_sections(el.content)
+      return pandoc.RawBlock("ms", columns_to_ms(sections)), false
     elseif el.content[1] and el.content[1].t == "Header" and el.content[1].level == 1 then
-      if el.identifier == "skills" then
-        return pandoc.RawBlock("ms", skills_to_ms(el)), false
-      end
-      return pandoc.RawBlock("ms", jobs_to_ms(el)), false
+      return pandoc.RawBlock("ms", section_to_ms(el)), false
     end
   end,
 }
@@ -179,6 +259,7 @@ local filter = {
 return {
   Pandoc = function(doc)
     doc.blocks = group_into_sections(doc.blocks)
+    doc.blocks = group_columns(doc.blocks)
     return doc:walk(filter)
   end,
 }
